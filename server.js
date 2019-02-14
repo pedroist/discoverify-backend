@@ -4,11 +4,19 @@ let querystring = require('querystring')
 
 let app = express()
 
-let redirect_uri = 
-  process.env.REDIRECT_URI || 
+let redirect_uri =
+  process.env.REDIRECT_URI ||
   'http://localhost:8888/callback'
 
-app.get('/login', function(req, res) {
+app.use(function (req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Authorization, Accept");
+  next();
+});
+
+app.get('/login', function (req, res) {
+  console.log("Reditecting to spotify...");
   res.redirect('https://accounts.spotify.com/authorize?' +
     querystring.stringify({
       response_type: 'code',
@@ -18,7 +26,8 @@ app.get('/login', function(req, res) {
     }))
 })
 
-app.get('/callback', function(req, res) {
+app.get('/callback', function (req, res) {
+  console.log("Inside the callback...");
   let code = req.query.code || null
   let authOptions = {
     url: 'https://accounts.spotify.com/api/token',
@@ -34,9 +43,11 @@ app.get('/callback', function(req, res) {
     },
     json: true
   }
-  request.post(authOptions, function(error, response, body) {
+  request.post(authOptions, function (error, response, body) {
+    console.log("error: " + error);
+    console.log("response: " + response);
     var access_token = body.access_token
-    let uri = process.env.FRONTEND_URI || 'http://localhost:3000'
+    let uri = process.env.FRONTEND_URI || 'http://localhost:4200'
     res.redirect(uri + '?access_token=' + access_token)
   })
 })
